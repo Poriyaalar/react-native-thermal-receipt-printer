@@ -11,6 +11,7 @@ export interface PrinterOptions {
   cut?: boolean;
   tailingLine?: boolean;
   encoding?: string;
+  keepConnection?: boolean;
 }
 
 export interface IUSBPrinter {
@@ -43,7 +44,8 @@ const textTo64Buffer = (text: string, opts: PrinterOptions) => {
     ...opts,
   };
   const buffer = EPToolkit.exchange_text(text, options);
-  return buffer.toString("base64");
+  // return buffer.toString("base64");
+  return buffer.toString("base64").replace("G0AcJhxD/xsy", ""); // Atpos printer sho
 };
 
 const billTo64Buffer = (text: string, opts: PrinterOptions) => {
@@ -125,6 +127,7 @@ export const USBPrinter = {
   ): void =>
     RNUSBPrinter.printRawData(
       textTo64Buffer(text, opts),
+      opts?.keepConnection,
       (msg: String) => {
         cb && cb(msg);
       },
@@ -184,6 +187,7 @@ export const BLEPrinter = {
     } else {
       RNBLEPrinter.printRawData(
         textTo64Buffer(text, opts),
+        opts?.keepConnection,
         (msg: String) => {
           cb && cb(msg);
         },
@@ -246,7 +250,11 @@ export const NetPrinter = {
       resolve();
     }),
 
-  printText: (text: string, opts = {}, cb: (msg: String) => void): void => {
+  printText: (
+    text: string,
+    opts: PrinterOptions = {},
+    cb: (msg: String) => void
+  ): void => {
     if (Platform.OS === "ios") {
       const processedText = textPreprocessingIOS(text);
       RNNetPrinter.printRawData(
@@ -260,6 +268,7 @@ export const NetPrinter = {
     } else {
       RNNetPrinter.printRawData(
         textTo64Buffer(text, opts),
+        opts?.keepConnection,
         (msg: String) => {
           cb && cb(msg);
         },
