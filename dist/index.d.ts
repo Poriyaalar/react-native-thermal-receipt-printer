@@ -4,6 +4,7 @@ export interface PrinterOptions {
     cut?: boolean;
     tailingLine?: boolean;
     encoding?: string;
+    keepConnection?: boolean;
 }
 export interface IUSBPrinter {
     device_name: string;
@@ -40,7 +41,7 @@ export declare const NetPrinter: {
     getDeviceList: () => Promise<INetPrinter[]>;
     connectPrinter: (host: string, port: number) => Promise<INetPrinter>;
     closeConn: () => Promise<void>;
-    printText: (text: string, opts: {} | undefined, cb: (msg: String) => void) => void;
+    printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
     printBill: (text: string, opts?: {}) => void;
 };
 export declare const NetPrinterEventEmitter: NativeEventEmitter;
