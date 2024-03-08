@@ -84,14 +84,27 @@ export var USBPrinter = {
     printText: function (text, opts, cb) {
         if (opts === void 0) { opts = {}; }
         return RNUSBPrinter.printRawData(textTo64Buffer(text, opts), opts === null || opts === void 0 ? void 0 : opts.keepConnection, function (msg) {
-            cb && cb(msg);
-        }, function (error) { return console.warn(error); });
+            cb && cb();
+        }, function (error) { cb && cb(error); });
     },
     printBill: function (text, opts) {
         if (opts === void 0) { opts = {}; }
         return RNUSBPrinter.printRawData(billTo64Buffer(text, opts), function (error) {
             return console.warn(error);
         });
+    },
+
+    printQrCode: function (qrCode, cb) {
+        // if (opts === void 0) { opts = {}; }
+        return RNUSBPrinter.printQrCode(qrCode, function (msg) {
+            cb && cb();
+        }, function (error) { cb && cb(error); });
+    },
+
+    printImage: function (imageString, cb) {
+        return RNUSBPrinter.printImageData(imageString, function (msg) {
+            cb && cb();
+        }, function (error) { cb && cb(error); });
     },
 };
 export var BLEPrinter = {
@@ -124,8 +137,8 @@ export var BLEPrinter = {
         }
         else {
             RNBLEPrinter.printRawData(textTo64Buffer(text, opts), opts === null || opts === void 0 ? void 0 : opts.keepConnection, function (msg) {
-                cb && cb(msg);
-            }, function (error) { return console.warn(error); });
+                cb && cb();
+            }, function (error) { cb && cb(error); });
         }
     },
     printBill: function (text, opts) {
@@ -139,6 +152,19 @@ export var BLEPrinter = {
                 return console.warn(error);
             });
         }
+    },
+
+    printQrCode: function (qrCode, cb) {
+        // if (opts === void 0) { opts = {}; }
+        return RNBLEPrinter.printQrCode(qrCode, function (msg) {
+            cb && cb();
+        }, function (error) { cb && cb(error); });
+    },
+
+    printImage: function (imageString, cb) {
+        return RNBLEPrinter.printImageData(imageString, function (msg) {
+            cb && cb();
+        }, function (error) { cb && cb(error); });
     },
 };
 export var NetPrinter = {
@@ -168,13 +194,13 @@ export var NetPrinter = {
         if (Platform.OS === "ios") {
             var processedText = textPreprocessingIOS(text);
             RNNetPrinter.printRawData(processedText.text, processedText.opts, function (msg) {
-                cb && cb(msg);
-            }, function (error) { return console.warn(error); });
+                cb && cb();
+            }, function (error) { cb && cb(error); });
         }
         else {
             RNNetPrinter.printRawData(textTo64Buffer(text, opts), opts === null || opts === void 0 ? void 0 : opts.keepConnection, function (msg) {
-                cb && cb(msg);
-            }, function (error) { return console.warn(error); });
+                cb && cb();
+            }, function (error) { cb && cb(error); });
         }
     },
     printBill: function (text, opts) {
@@ -188,6 +214,19 @@ export var NetPrinter = {
                 return console.warn(error);
             });
         }
+    },
+
+    printQrCode: function (qrCode, cb) {
+        // if (opts === void 0) { opts = {}; }
+        return RNNetPrinter.printQrCode(qrCode, function (msg) {
+            cb && cb();
+        }, function (error) { cb && cb(error); });
+    },
+
+    printImage: function (imageString, cb) {
+        return RNNetPrinter.printImageData(imageString, function (msg) {
+            cb && cb();
+        }, function (error) { cb && cb(error); });
     },
 };
 export var NetPrinterEventEmitter = new NativeEventEmitter(RNNetPrinter);

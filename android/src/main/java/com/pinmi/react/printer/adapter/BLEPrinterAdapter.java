@@ -262,10 +262,30 @@ public class BLEPrinterAdapter implements PrinterAdapter {
         }
     }
 
-    @Override
-    public void printImageData(String imageUrl, Callback errorCallback) {
+    public static Bitmap getBitmapfromBase64(String imageBase64) {
+        try {
+            byte[] decodedString = android.util.Base64.decode(imageBase64, android.util.Base64.DEFAULT);
+            Bitmap bitmapImage = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 
-        final Bitmap bitmapImage = getBitmapFromURL(imageUrl);
+            return bitmapImage;
+        } catch (IllegalArgumentException e) {
+            // Handle invalid Base64 string
+            e.printStackTrace();
+            return null;
+        } catch (OutOfMemoryError e) {
+            // Handle out of memory error
+            e.printStackTrace();
+            return null;
+        } catch (Exception e) {
+            // Handle other exceptions
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public void printImageData(final String imageBase64, Callback succesCallback, Callback errorCallback) {
+        final Bitmap bitmapImage = getBitmapfromBase64(imageBase64);
 
         if (bitmapImage == null) {
             errorCallback.invoke("image not found");
@@ -311,9 +331,10 @@ public class BLEPrinterAdapter implements PrinterAdapter {
         }
 
     }
+    
 
     @Override
-    public void printQrCode(String qrCode, Callback errorCallback) {
+    public void printQrCode(String qrCode, Callback successCallback, Callback errorCallback) {
         final Bitmap bitmapImage = TextToQrImageEncode(qrCode);
 
         if (bitmapImage == null) {

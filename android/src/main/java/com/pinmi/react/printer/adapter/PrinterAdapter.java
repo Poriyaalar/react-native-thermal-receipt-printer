@@ -26,7 +26,7 @@ public interface PrinterAdapter {
     public void printRawData(String rawBase64Data, Boolean keepConnection, Callback successCallback,
             Callback errorCallback);
 
-    public void printImageData(String imageUrl, Callback errorCallback);
+    public void printImageData(String imageUrl, Callback succesCallback, Callback errorCallback);
 
-    public void printQrCode(String qrCode, Callback errorCallback);
+    public void printQrCode(String qrCode, Callback successCallback, Callback errorCallback);
 }
