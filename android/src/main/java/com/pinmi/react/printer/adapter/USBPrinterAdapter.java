@@ -275,9 +275,30 @@ public class USBPrinterAdapter implements PrinterAdapter {
         }
     }
 
+    public static Bitmap getBitmapfromBase64(String imageBase64) {
+        try {
+            byte[] decodedString = android.util.Base64.decode(imageBase64, android.util.Base64.DEFAULT);
+            Bitmap bitmapImage = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+            return bitmapImage;
+        } catch (IllegalArgumentException e) {
+            // Handle invalid Base64 string
+            e.printStackTrace();
+            return null;
+        } catch (OutOfMemoryError e) {
+            // Handle out of memory error
+            e.printStackTrace();
+            return null;
+        } catch (Exception e) {
+            // Handle other exceptions
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     @Override
-    public void printImageData(final String imageUrl, Callback errorCallback) {
-        final Bitmap bitmapImage = getBitmapFromURL(imageUrl);
+    public void printImageData(final String imageBase64, Callback succesCallback, Callback errorCallback) {
+        final Bitmap bitmapImage = getBitmapfromBase64(imageBase64);
 
         if (bitmapImage == null) {
             errorCallback.invoke("image not found");
@@ -317,7 +338,8 @@ public class USBPrinterAdapter implements PrinterAdapter {
             }
 
             mUsbDeviceConnection.bulkTransfer(mEndPoint, SET_LINE_SPACE_32, SET_LINE_SPACE_32.length, 100000);
-            mUsbDeviceConnection.bulkTransfer(mEndPoint, LINE_FEED, LINE_FEED.length, 100000);
+            // mUsbDeviceConnection.bulkTransfer(mEndPoint, LINE_FEED, LINE_FEED.length, 100000);
+            succesCallback.invoke("Success");
         } else {
             String msg = "failed to connected to device";
             Log.v(LOG_TAG, msg);
@@ -332,10 +354,10 @@ public class USBPrinterAdapter implements PrinterAdapter {
 
         BitMatrix bitMatrix = null;
         try {
-            bitMatrix = writer.encode(Value, com.google.zxing.BarcodeFormat.QR_CODE, 250, 250,
+            int width = 100;
+            int height = 100;
+            bitMatrix = writer.encode(Value, com.google.zxing.BarcodeFormat.QR_CODE, 100, 100,
                     ImmutableMap.of(EncodeHintType.MARGIN, 1));
-            int width = 250;
-            int height = 250;
             Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
             for (int i = 0; i < width; i++) {
@@ -352,8 +374,11 @@ public class USBPrinterAdapter implements PrinterAdapter {
         return null;
     }
 
+
+
+
     @Override
-    public void printQrCode(String qrCode, Callback errorCallback) {
+    public void printQrCode(String qrCode, Callback successCallback, Callback errorCallback) {
 
         final Bitmap bitmapImage = TextToQrImageEncode(qrCode);
 
@@ -396,6 +421,7 @@ public class USBPrinterAdapter implements PrinterAdapter {
 
             mUsbDeviceConnection.bulkTransfer(mEndPoint, SET_LINE_SPACE_32, SET_LINE_SPACE_32.length, 100000);
             mUsbDeviceConnection.bulkTransfer(mEndPoint, LINE_FEED, LINE_FEED.length, 100000);
+            successCallback.invoke("Success");
         } else {
             String msg = "failed to connected to device";
             Log.v(LOG_TAG, msg);

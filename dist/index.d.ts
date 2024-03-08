@@ -27,6 +27,8 @@ export declare const USBPrinter: {
     closeConn: () => Promise<void>;
     printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
     printBill: (text: string, opts?: PrinterOptions) => void;
+    printQrCode: (text: string, cb: (msg: String) => void) => void;
+    printImage: (text: string, cb: (msg: String) => void) => void;
 };
 export declare const BLEPrinter: {
     init: () => Promise<void>;
@@ -35,6 +37,8 @@ export declare const BLEPrinter: {
     closeConn: () => Promise<void>;
     printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
     printBill: (text: string, opts?: PrinterOptions) => void;
+    printQrCode: (text: string, cb: (msg: String) => void) => void;
+    printImage: (text: string, cb: (msg: String) => void) => void;
 };
 export declare const NetPrinter: {
     init: () => Promise<void>;
@@ -43,6 +47,8 @@ export declare const NetPrinter: {
     closeConn: () => Promise<void>;
     printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
     printBill: (text: string, opts?: {}) => void;
+    printQrCode: (text: string, cb: (msg: String) => void) => void;
+    printImage: (text: string, cb: (msg: String) => void) => void;
 };
 export declare const NetPrinterEventEmitter: NativeEventEmitter;
 export declare enum RN_THERMAL_RECEIPT_PRINTER_EVENTS {
