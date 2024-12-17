@@ -131,7 +131,7 @@ public class USBPrinterAdapter implements PrinterAdapter {
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         filter.addAction(UsbManager.ACTION_USB_ACCESSORY_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        mContext.registerReceiver(mUsbDeviceReceiver, filter);
+        mContext.registerReceiver(mUsbDeviceReceiver, filter, Context.RECEIVER_EXPORTED);
         Log.v(LOG_TAG, "RNUSBPrinter initialized");
         successCallback.invoke();
     }
