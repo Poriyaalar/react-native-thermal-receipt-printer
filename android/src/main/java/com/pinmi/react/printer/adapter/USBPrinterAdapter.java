@@ -40,6 +40,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import android.os.Build;
 
 /**
  * Created by xiesubin on 2017/9/20.
@@ -115,25 +116,47 @@ public class USBPrinterAdapter implements PrinterAdapter {
     };
 
     public void init(ReactApplicationContext reactContext, Callback successCallback, Callback errorCallback) {
-        this.mContext = reactContext;
-        this.mUSBManager = (UsbManager) this.mContext.getSystemService(Context.USB_SERVICE);
-        // Make Intent explicit by setting package name
-        Intent permissionIntent = new Intent(ACTION_USB_PERMISSION);
-        permissionIntent.setPackage(mContext.getPackageName());
-    
-        // Use FLAG_IMMUTABLE instead of FLAG_MUTABLE
-        this.mPermissionIndent = PendingIntent.getBroadcast(
-                mContext, 
-                0, 
-                permissionIntent, 
-                PendingIntent.FLAG_IMMUTABLE);
-        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        filter.addAction(UsbManager.ACTION_USB_ACCESSORY_ATTACHED);
-        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-        mContext.registerReceiver(mUsbDeviceReceiver, filter, Context.RECEIVER_EXPORTED);
-        Log.v(LOG_TAG, "RNUSBPrinter initialized");
-        successCallback.invoke();
+        try {
+            this.mContext = reactContext;
+            this.mUSBManager = (UsbManager) this.mContext.getSystemService(Context.USB_SERVICE);
+
+            // Make Intent explicit by setting package name
+            Intent permissionIntent = new Intent(ACTION_USB_PERMISSION);
+            permissionIntent.setPackage(mContext.getPackageName());
+
+            // Dynamically set the PendingIntent flag based on the Android version
+            int pendingIntentFlag;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                pendingIntentFlag = PendingIntent.FLAG_IMMUTABLE;
+            } else {
+                pendingIntentFlag = PendingIntent.FLAG_MUTABLE;
+            }
+
+            this.mPermissionIndent = PendingIntent.getBroadcast(
+                    mContext,
+                    0,
+                    permissionIntent,
+                    pendingIntentFlag
+            );
+
+            // Register broadcast receiver
+            IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+            filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+            filter.addAction(UsbManager.ACTION_USB_ACCESSORY_ATTACHED);
+            filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                mContext.registerReceiver(mUsbDeviceReceiver, filter, Context.RECEIVER_EXPORTED);
+            } else {
+                mContext.registerReceiver(mUsbDeviceReceiver, filter);
+            }
+
+            Log.v(LOG_TAG, "RNUSBPrinter initialized");
+            successCallback.invoke();
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Initialization failed: " + e.getMessage());
+            errorCallback.invoke(e.getMessage());
+        }
     }
 
     public void closeConnectionIfExists() {
