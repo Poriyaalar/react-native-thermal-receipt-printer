@@ -13,7 +13,21 @@ export interface PrinterOptions {
   encoding?: string;
   keepConnection?: boolean;
 }
-
+export enum PrinterWidth {
+  "58mm" = 58,
+  "80mm" = 80,
+}
+export interface PrinterImageOptions {
+  beep?: boolean;
+  cut?: boolean;
+  tailingLine?: boolean;
+  encoding?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  printerWidthType?: PrinterWidth;
+  // only ios
+  paddingX?: number;
+}
 export interface IUSBPrinter {
   device_name: string;
   vendor_id: string;
@@ -138,6 +152,20 @@ export const USBPrinter = {
     RNUSBPrinter.printRawData(billTo64Buffer(text, opts), (error: Error) =>
       console.warn(error)
     ),
+  printImageBase64: function (Base64: string, opts: PrinterImageOptions = {}) {
+    if (Platform.OS === "ios") {
+      RNUSBPrinter.printImageBase64(Base64, opts, (error: Error) =>
+        console.warn(error)
+      );
+    } else {
+      RNUSBPrinter.printImageBase64(
+        Base64,
+        opts?.imageWidth ?? 0,
+        opts?.imageHeight ?? 0,
+        (error: Error) => console.warn(error)
+      );
+    }
+  },
 };
 
 export const BLEPrinter = {
@@ -210,7 +238,26 @@ export const BLEPrinter = {
       );
     }
   },
-
+  printImageBase64: function (Base64: string, opts: PrinterImageOptions = {}) {
+    if (Platform.OS === "ios") {
+      /**
+       * just development
+       */
+      RNBLEPrinter.printImageBase64(Base64, opts, (error: Error) =>
+        console.warn(error)
+      );
+    } else {
+      /**
+       * just development
+       */
+      RNBLEPrinter.printImageBase64(
+        Base64,
+        opts?.imageWidth ?? 0,
+        opts?.imageHeight ?? 0,
+        (error: Error) => console.warn(error)
+      );
+    }
+  },
   // printImage: async (imagePath: string) => {
   //   const tmp = await imageToBuffer(imagePath);
   //   RNBLEPrinter.printRawData(tmp, (error: Error) => console.warn(error));
@@ -288,6 +335,20 @@ export const NetPrinter = {
     } else {
       RNNetPrinter.printRawData(billTo64Buffer(text, opts), (error: Error) =>
         console.warn(error)
+      );
+    }
+  },
+  printImageBase64: function (Base64: string, opts: PrinterImageOptions = {}) {
+    if (Platform.OS === "ios") {
+      RNNetPrinter.printImageBase64(Base64, opts, (error: Error) =>
+        console.warn(error)
+      );
+    } else {
+      RNNetPrinter.printImageBase64(
+        Base64,
+        opts?.imageWidth ?? 0,
+        opts?.imageHeight ?? 0,
+        (error: Error) => console.warn(error)
       );
     }
   },

@@ -6,6 +6,20 @@ export interface PrinterOptions {
     encoding?: string;
     keepConnection?: boolean;
 }
+export declare enum PrinterWidth {
+    "58mm" = 58,
+    "80mm" = 80
+}
+export interface PrinterImageOptions {
+    beep?: boolean;
+    cut?: boolean;
+    tailingLine?: boolean;
+    encoding?: string;
+    imageWidth?: number;
+    imageHeight?: number;
+    printerWidthType?: PrinterWidth;
+    paddingX?: number;
+}
 export interface IUSBPrinter {
     device_name: string;
     vendor_id: string;
@@ -27,6 +41,7 @@ export declare const USBPrinter: {
     closeConn: () => Promise<void>;
     printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
     printBill: (text: string, opts?: PrinterOptions) => void;
+    printImageBase64: (Base64: string, opts?: PrinterImageOptions) => void;
 };
 export declare const BLEPrinter: {
     init: () => Promise<void>;
@@ -35,6 +50,7 @@ export declare const BLEPrinter: {
     closeConn: () => Promise<void>;
     printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
     printBill: (text: string, opts?: PrinterOptions) => void;
+    printImageBase64: (Base64: string, opts?: PrinterImageOptions) => void;
 };
 export declare const NetPrinter: {
     init: () => Promise<void>;
@@ -43,6 +59,7 @@ export declare const NetPrinter: {
     closeConn: () => Promise<void>;
     printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
     printBill: (text: string, opts?: {}) => void;
+    printImageBase64: (Base64: string, opts?: PrinterImageOptions) => void;
 };
 export declare const NetPrinterEventEmitter: NativeEventEmitter;
 export declare enum RN_THERMAL_RECEIPT_PRINTER_EVENTS {
