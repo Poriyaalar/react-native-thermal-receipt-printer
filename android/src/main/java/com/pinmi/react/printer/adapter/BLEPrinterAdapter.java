@@ -489,7 +489,7 @@ public class BLEPrinterAdapter implements PrinterAdapter {
 
             OutputStream printerOutputStream = socket.getOutputStream();
 
-            // printerOutputStream.write(SET_LINE_SPACE_24);
+            printerOutputStream.write(SET_LINE_SPACE_24);
             printerOutputStream.write(CENTER_ALIGN);
 
             for (int y = 0; y < pixels.length; y += 24) {
