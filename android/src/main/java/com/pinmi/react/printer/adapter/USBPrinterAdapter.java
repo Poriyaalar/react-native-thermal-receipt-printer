@@ -518,7 +518,8 @@ public class USBPrinterAdapter implements PrinterAdapter {
     }
 
     @Override
-    public void printImageBase64(final Bitmap bitmapImage, int imageWidth, int imageHeight, Callback errorCallback) {
+    public void printImageBase64(final Bitmap bitmapImage, int imageWidth, int imageHeight, Callback successCallback,
+            Callback errorCallback) {
         if (bitmapImage == null) {
             errorCallback.invoke("image not found");
             return;
@@ -556,12 +557,16 @@ public class USBPrinterAdapter implements PrinterAdapter {
                 mUsbDeviceConnection.bulkTransfer(mEndPoint, LINE_FEED, LINE_FEED.length, 100000);
             }
 
-            mUsbDeviceConnection.bulkTransfer(mEndPoint, SET_LINE_SPACE_32, SET_LINE_SPACE_32.length, 100000);
-            mUsbDeviceConnection.bulkTransfer(mEndPoint, LINE_FEED, LINE_FEED.length, 100000);
+            // mUsbDeviceConnection.bulkTransfer(mEndPoint, SET_LINE_SPACE_32,
+            // SET_LINE_SPACE_32.length, 100000);
+            // mUsbDeviceConnection.bulkTransfer(mEndPoint, LINE_FEED, LINE_FEED.length,
+            // 100000);
+            successCallback.invoke("Print SuccessFully");
         } else {
             String msg = "failed to connected to device";
             Log.v(LOG_TAG, msg);
             errorCallback.invoke(msg);
+
         }
 
     }
