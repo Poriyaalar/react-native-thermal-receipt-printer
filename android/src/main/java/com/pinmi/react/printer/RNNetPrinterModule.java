@@ -10,6 +10,9 @@ import com.pinmi.react.printer.adapter.BLEPrinterDeviceId;
 import com.pinmi.react.printer.adapter.NetPrinterAdapter;
 import com.pinmi.react.printer.adapter.NetPrinterDeviceId;
 import com.pinmi.react.printer.adapter.PrinterAdapter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 
 /**
  * Created by xiesubin on 2017/9/22.
@@ -77,14 +80,25 @@ public class RNNetPrinterModule extends ReactContextBaseJavaModule implements RN
         adapter.printQrCode(qrCode, errorCallback);
     }
 
+    @ReactMethod
+    @Override
+    public void printImageBase64(String base64, int imageWidth, int imageHeight, Callback successCallback,
+            Callback errorCallback) {
+        // String imageBase64 = "data:image/png;base64," + imageUrl;
+        // String base64ImageProcessed = imageUrl.split(",")[1];
+        byte[] decodedString = Base64.decode(base64, Base64.DEFAULT);
+        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        adapter.printImageBase64(decodedByte, imageWidth, imageHeight, successCallback, errorCallback);
+    }
 
     @ReactMethod
     public void addListener(String eventName) {
     }
-    
+
     @ReactMethod
     public void removeListeners(Integer count) {
     }
+
     @Override
     public String getName() {
         return "RNNetPrinter";

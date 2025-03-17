@@ -15,6 +15,10 @@ import com.pinmi.react.printer.adapter.PrinterDevice;
 
 import java.util.ArrayList;
 import java.util.List;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
+import android.util.Log;
 
 /**
  * Created by xiesubin on 2017/9/22.
@@ -81,6 +85,15 @@ public class RNBLEPrinterModule extends ReactContextBaseJavaModule implements RN
     @ReactMethod
     public void connectPrinter(String innerAddress, Callback successCallback, Callback errorCallback) {
         adapter.selectDevice(BLEPrinterDeviceId.valueOf(innerAddress), successCallback, errorCallback);
+    }
+
+    @ReactMethod
+    @Override
+    public void printImageBase64(String base64, int imageWidth, int imageHeight,
+            Callback successCallback, Callback errorCallback) {
+        byte[] decodedString = Base64.decode(base64, Base64.DEFAULT);
+        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        adapter.printImageBase64(decodedByte, imageWidth, imageHeight, successCallback, errorCallback);
     }
 
     @Override

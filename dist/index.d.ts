@@ -6,6 +6,20 @@ export interface PrinterOptions {
     encoding?: string;
     keepConnection?: boolean;
 }
+export declare enum PrinterWidth {
+    "58mm" = 58,
+    "80mm" = 80
+}
+export interface PrinterImageOptions {
+    beep?: boolean;
+    cut?: boolean;
+    tailingLine?: boolean;
+    encoding?: string;
+    imageWidth?: number;
+    imageHeight?: number;
+    printerWidthType?: PrinterWidth;
+    paddingX?: number;
+}
 export interface IUSBPrinter {
     device_name: string;
     vendor_id: string;
@@ -25,24 +39,27 @@ export declare const USBPrinter: {
     getDeviceList: () => Promise<IUSBPrinter[]>;
     connectPrinter: (vendorId: string, productId: string) => Promise<IUSBPrinter>;
     closeConn: () => Promise<void>;
-    printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
-    printBill: (text: string, opts?: PrinterOptions) => void;
+    printText: (text: string, opts: PrinterOptions | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
+    printBill: (text: string, opts: PrinterOptions | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
+    printImageBase64: (Base64: string, opts: PrinterImageOptions | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
 };
 export declare const BLEPrinter: {
     init: () => Promise<void>;
     getDeviceList: () => Promise<IBLEPrinter[]>;
     connectPrinter: (inner_mac_address: string) => Promise<IBLEPrinter>;
     closeConn: () => Promise<void>;
-    printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
-    printBill: (text: string, opts?: PrinterOptions) => void;
+    printText: (text: string, opts: PrinterOptions | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
+    printBill: (text: string, opts: PrinterOptions | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
+    printImageBase64: (Base64: string, opts: PrinterImageOptions | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
 };
 export declare const NetPrinter: {
     init: () => Promise<void>;
     getDeviceList: () => Promise<INetPrinter[]>;
     connectPrinter: (host: string, port: number) => Promise<INetPrinter>;
     closeConn: () => Promise<void>;
-    printText: (text: string, opts: PrinterOptions | undefined, cb: (msg: String) => void) => void;
-    printBill: (text: string, opts?: {}) => void;
+    printText: (text: string, opts: PrinterOptions | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
+    printBill: (text: string, opts: {} | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
+    printImageBase64: (Base64: string, opts: PrinterImageOptions | undefined, cbSuccess: (msg: String) => void, cbErr: (error: Error) => void) => void;
 };
 export declare const NetPrinterEventEmitter: NativeEventEmitter;
 export declare enum RN_THERMAL_RECEIPT_PRINTER_EVENTS {

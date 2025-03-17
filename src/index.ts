@@ -13,7 +13,21 @@ export interface PrinterOptions {
   encoding?: string;
   keepConnection?: boolean;
 }
-
+export enum PrinterWidth {
+  "58mm" = 58,
+  "80mm" = 80,
+}
+export interface PrinterImageOptions {
+  beep?: boolean;
+  cut?: boolean;
+  tailingLine?: boolean;
+  encoding?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  printerWidthType?: PrinterWidth;
+  // only ios
+  paddingX?: number;
+}
 export interface IUSBPrinter {
   device_name: string;
   vendor_id: string;
@@ -123,21 +137,70 @@ export const USBPrinter = {
   printText: (
     text: string,
     opts: PrinterOptions = {},
-    cb: (msg: String) => void
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
   ): void =>
     RNUSBPrinter.printRawData(
       textTo64Buffer(text, opts),
       opts?.keepConnection,
       (msg: String) => {
-        cb && cb(msg);
+        cbSuccess && cbSuccess(msg);
       },
-      (error: Error) => console.warn(error)
+      (error: Error) => {
+        console.warn(error);
+        cbErr && cbErr(error);
+      }
     ),
 
-  printBill: (text: string, opts: PrinterOptions = {}): void =>
-    RNUSBPrinter.printRawData(billTo64Buffer(text, opts), (error: Error) =>
-      console.warn(error)
+  printBill: (
+    text: string,
+    opts: PrinterOptions = {},
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
+  ): void =>
+    RNUSBPrinter.printRawData(
+      billTo64Buffer(text, opts),
+      (msg: String) => {
+        cbSuccess && cbSuccess(msg);
+      },
+      (error: Error) => {
+        console.warn(error);
+        cbErr && cbErr(error);
+      }
     ),
+  printImageBase64: function (
+    Base64: string,
+    opts: PrinterImageOptions = {},
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
+  ) {
+    if (Platform.OS === "ios") {
+      RNUSBPrinter.printImageBase64(
+        Base64,
+        opts,
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
+      );
+    } else {
+      RNUSBPrinter.printImageBase64(
+        Base64,
+        opts?.imageWidth ?? 0,
+        opts?.imageHeight ?? 0,
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
+      );
+    }
+  },
 };
 
 export const BLEPrinter = {
@@ -175,42 +238,108 @@ export const BLEPrinter = {
   printText: (
     text: string,
     opts: PrinterOptions = {},
-    cb: (msg: String) => void
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
   ): void => {
     if (Platform.OS === "ios") {
       const processedText = textPreprocessingIOS(text);
       RNBLEPrinter.printRawData(
         processedText.text,
         processedText.opts,
-        (error: Error) => console.warn(error)
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
       );
     } else {
       RNBLEPrinter.printRawData(
         textTo64Buffer(text, opts),
         opts?.keepConnection,
         (msg: String) => {
-          cb && cb(msg);
+          cbSuccess && cbSuccess(msg);
         },
-        (error: Error) => console.warn(error)
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
       );
     }
   },
 
-  printBill: (text: string, opts: PrinterOptions = {}): void => {
+  printBill: (
+    text: string,
+    opts: PrinterOptions = {},
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
+  ): void => {
     if (Platform.OS === "ios") {
       const processedText = textPreprocessingIOS(text);
       RNBLEPrinter.printRawData(
         processedText.text,
         processedText.opts,
-        (error: Error) => console.warn(error)
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
       );
     } else {
-      RNBLEPrinter.printRawData(billTo64Buffer(text, opts), (error: Error) =>
-        console.warn(error)
+      RNBLEPrinter.printRawData(
+        billTo64Buffer(text, opts),
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
       );
     }
   },
-
+  printImageBase64: function (
+    Base64: string,
+    opts: PrinterImageOptions = {},
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
+  ) {
+    if (Platform.OS === "ios") {
+      /**
+       * just development
+       */
+      RNBLEPrinter.printImageBase64(
+        Base64,
+        opts,
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
+      );
+    } else {
+      /**
+       * just development
+       */
+      RNBLEPrinter.printImageBase64(
+        Base64,
+        opts?.imageWidth ?? 0,
+        opts?.imageHeight ?? 0,
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
+      );
+    }
+  },
   // printImage: async (imagePath: string) => {
   //   const tmp = await imageToBuffer(imagePath);
   //   RNBLEPrinter.printRawData(tmp, (error: Error) => console.warn(error));
@@ -253,7 +382,8 @@ export const NetPrinter = {
   printText: (
     text: string,
     opts: PrinterOptions = {},
-    cb: (msg: String) => void
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
   ): void => {
     if (Platform.OS === "ios") {
       const processedText = textPreprocessingIOS(text);
@@ -261,33 +391,90 @@ export const NetPrinter = {
         processedText.text,
         processedText.opts,
         (msg: String) => {
-          cb && cb(msg);
+          cbSuccess && cbSuccess(msg);
         },
-        (error: Error) => console.warn(error)
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
       );
     } else {
       RNNetPrinter.printRawData(
         textTo64Buffer(text, opts),
         opts?.keepConnection,
         (msg: String) => {
-          cb && cb(msg);
+          cbSuccess && cbSuccess(msg);
         },
-        (error: Error) => console.warn(error)
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
       );
     }
   },
 
-  printBill: (text: string, opts = {}): void => {
+  printBill: (
+    text: string,
+    opts = {},
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
+  ): void => {
     if (Platform.OS === "ios") {
       const processedText = textPreprocessingIOS(text);
       RNNetPrinter.printRawData(
         processedText.text,
         processedText.opts,
-        (error: Error) => console.warn(error)
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
       );
     } else {
-      RNNetPrinter.printRawData(billTo64Buffer(text, opts), (error: Error) =>
-        console.warn(error)
+      RNNetPrinter.printRawData(
+        billTo64Buffer(text, opts),
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
+      );
+    }
+  },
+  printImageBase64: function (
+    Base64: string,
+    opts: PrinterImageOptions = {},
+    cbSuccess: (msg: String) => void,
+    cbErr: (error: Error) => void
+  ) {
+    if (Platform.OS === "ios") {
+      RNNetPrinter.printImageBase64(
+        Base64,
+        opts,
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
+      );
+    } else {
+      RNNetPrinter.printImageBase64(
+        Base64,
+        opts?.imageWidth ?? 0,
+        opts?.imageHeight ?? 0,
+        (msg: String) => {
+          cbSuccess && cbSuccess(msg);
+        },
+        (error: Error) => {
+          console.warn(error);
+          cbErr && cbErr(error);
+        }
       );
     }
   },
