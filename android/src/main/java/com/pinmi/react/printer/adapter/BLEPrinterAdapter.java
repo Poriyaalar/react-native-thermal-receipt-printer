@@ -188,9 +188,17 @@ public class BLEPrinterAdapter implements PrinterAdapter {
     }
 
     private void connectBluetoothDevice(BluetoothDevice device) throws IOException {
+        this.closeConnectionIfExists();
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
-        this.mBluetoothSocket = device.createRfcommSocketToServiceRecord(uuid);
-        this.mBluetoothSocket.connect();
+
+        try {
+            this.mBluetoothSocket = device.createRfcommSocketToServiceRecord(uuid);
+            this.mBluetoothSocket.connect();
+        } catch (IOException e) {
+            this.mBluetoothSocket = device.createRfcommSocketToServiceRecord(uuid);
+            this.mBluetoothSocket.connect();
+        }
+
         this.mBluetoothDevice = device;// 最后一步执行
 
     }
@@ -228,9 +236,17 @@ public class BLEPrinterAdapter implements PrinterAdapter {
                 try {
                     OutputStream printerOutputStream = socket.getOutputStream();
                     printerOutputStream.write(bytes, 0, bytes.length);
+                    Log.e(LOG_TAG, Integer.toString(bytes.length));
                     printerOutputStream.flush();
                     Log.e(LOG_TAG, Boolean.toString(keepConnection));
                     if (keepConnection != true) {
+                        try {
+
+                            Thread.sleep(bytes.length <= 2000 ? 100 : (bytes.length / 5));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
                         closeConnectionIfExists();
                         Log.e(LOG_TAG, "Connection  Closed");
                     }
