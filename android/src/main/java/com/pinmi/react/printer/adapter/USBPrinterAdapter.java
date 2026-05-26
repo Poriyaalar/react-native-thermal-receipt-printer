@@ -171,9 +171,22 @@ public class USBPrinterAdapter implements PrinterAdapter {
     }
 
     public void closeConnectionIfExists() {
-        if (mUsbDeviceConnection != null) {
-            mUsbDeviceConnection.releaseInterface(mUsbInterface);
-            mUsbDeviceConnection.close();
+        try {
+            if (mUsbDeviceConnection != null) {
+                try {
+                    if (mUsbInterface != null) {
+                        mUsbDeviceConnection.releaseInterface(mUsbInterface);
+                    }
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "releaseInterface error", e);
+                }
+                try {
+                    mUsbDeviceConnection.close();
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "close connection error", e);
+                }
+            }
+        } finally {
             mUsbInterface = null;
             mEndPoint = null;
             mUsbDeviceConnection = null;
@@ -234,69 +247,115 @@ public class USBPrinterAdapter implements PrinterAdapter {
     }
 
     private boolean openConnection() {
-        if (mUsbDevice == null) {
-            Log.e(LOG_TAG, "USB Deivce is not initialized");
-            return false;
-        }
-        if (mUSBManager == null) {
-            Log.e(LOG_TAG, "USB Manager is not initialized");
-            return false;
-        }
+        try {
+            if (mUsbDevice == null) {
+                Log.e(LOG_TAG, "USB Deivce is not initialized");
+                return false;
+            }
+            if (mUSBManager == null) {
+                Log.e(LOG_TAG, "USB Manager is not initialized");
+                return false;
+            }
 
-        if (mUsbDeviceConnection != null) {
-            Log.i(LOG_TAG, "USB Connection already connected");
-            return true;
-        }
+            closeConnectionIfExists();
 
-        UsbInterface usbInterface = mUsbDevice.getInterface(0);
-        for (int i = 0; i < usbInterface.getEndpointCount(); i++) {
-            final UsbEndpoint ep = usbInterface.getEndpoint(i);
-            if (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
-                if (ep.getDirection() == UsbConstants.USB_DIR_OUT) {
-                    UsbDeviceConnection usbDeviceConnection = mUSBManager.openDevice(mUsbDevice);
-                    if (usbDeviceConnection == null) {
-                        Log.e(LOG_TAG, "failed to open USB Connection");
-                        return false;
-                    }
-                    if (usbDeviceConnection.claimInterface(usbInterface, true)) {
+            UsbInterface usbInterface = mUsbDevice.getInterface(0);
+            for (int i = 0; i < usbInterface.getEndpointCount(); i++) {
+                final UsbEndpoint ep = usbInterface.getEndpoint(i);
+                if (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                    if (ep.getDirection() == UsbConstants.USB_DIR_OUT) {
+                        UsbDeviceConnection usbDeviceConnection =
+                                mUSBManager.openDevice(mUsbDevice);
+                        if (usbDeviceConnection == null) {
+                            Log.e(LOG_TAG, "failed to open USB Connection");
+                            return false;
+                        }
 
-                        mEndPoint = ep;
-                        mUsbInterface = usbInterface;
-                        mUsbDeviceConnection = usbDeviceConnection;
-                        Log.i(LOG_TAG, "Device connected");
-                        return true;
-                    } else {
-                        usbDeviceConnection.close();
-                        Log.e(LOG_TAG, "failed to claim usb connection");
-                        return false;
+                        if (usbDeviceConnection.claimInterface(
+                                usbInterface,
+                                true
+                        )) {
+
+                            mEndPoint = ep;
+                            mUsbInterface = usbInterface;
+                            mUsbDeviceConnection = usbDeviceConnection;
+                            Log.i(LOG_TAG, "Device connected");
+                            return true;
+                        } else {
+                            usbDeviceConnection.close();
+                            Log.e(LOG_TAG, "failed to claim usb connection");
+                            return false;
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "openConnection error", e);
         }
-        return true;
+        return false;
     }
 
-    public void printRawData(String data, Boolean keepConnection, Callback successCallback, Callback errorCallback) {
+    public void printRawData(
+        String data,
+        Boolean keepConnection,
+        Callback successCallback,
+        Callback errorCallback
+    ) {
+
         final String rawData = data;
-        Log.v(LOG_TAG, "start to print raw data " + data);
-        
+        Log.v(LOG_TAG, "start to print raw data");
         boolean isConnected = openConnection();
-        if (isConnected) {
-            Log.v(LOG_TAG, "Connected to device");
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    byte[] bytes = Base64.decode(rawData, Base64.DEFAULT);
-                    int b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytes, bytes.length, 100000);
-                    Log.i(LOG_TAG, "Return Status: b-->" + b);
-                    successCallback.invoke("Print SuccessFully");
-                }
-            }).start();
-        } else {
-            String msg = "failed to connected to device";
-            Log.v(LOG_TAG, msg);
-            errorCallback.invoke(msg);
+        if (!isConnected) {
+            errorCallback.invoke("failed to connected to device");
+            return;
         }
+        final UsbDeviceConnection connection =
+                mUsbDeviceConnection;
+        final UsbEndpoint endpoint =
+                mEndPoint;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (connection == null || endpoint == null) {
+                        errorCallback.invoke(
+                                "USB connection lost"
+                        );
+                        return;
+                    }
+                    byte[] bytes = Base64.decode(
+                            rawData,
+                            Base64.DEFAULT
+                    );
+
+                    int result = connection.bulkTransfer(
+                            endpoint,
+                            bytes,
+                            bytes.length,
+                            100000
+                    );
+                    Log.i(LOG_TAG, "Return Status: " + result);
+                    if (result < 0) {
+                        errorCallback.invoke(
+                                "USB print failed"
+                        );
+                        return;
+                    }
+                    successCallback.invoke(
+                            "Print SuccessFully"
+                    );
+
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "USB print error", e);
+                    errorCallback.invoke(e.getMessage());
+                } finally {
+                    if (!keepConnection) {
+                        closeConnectionIfExists();
+                    }
+                }
+            }
+
+        }).start();
     }
 
     public static Bitmap getBitmapFromURL(String src) {
@@ -332,7 +391,9 @@ public class USBPrinterAdapter implements PrinterAdapter {
         if (isConnected) {
             Log.v(LOG_TAG, "Connected to device");
             int[][] pixels = getPixelsSlowOld(bitmapImage);
-
+            if (mUsbDeviceConnection == null || mEndPoint == null) {
+                return;
+            }
             int b = mUsbDeviceConnection.bulkTransfer(mEndPoint, SET_LINE_SPACE_24, SET_LINE_SPACE_24.length, 100000);
 
             b = mUsbDeviceConnection.bulkTransfer(mEndPoint, CENTER_ALIGN, CENTER_ALIGN.length, 100000);
