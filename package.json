@@ -49,5 +49,8 @@
   },
   "author": "poriyaalar",
   "homepage": "https://github.com/Poriyaalar/react-native-thermal-receipt-printer#readme",
-  "license": "ISC"
+  "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  }
 }
