@@ -201,9 +201,50 @@ public class USBPrinterAdapter implements PrinterAdapter {
         }
 
         for (UsbDevice usbDevice : mUSBManager.getDeviceList().values()) {
-            lists.add(new USBPrinterDevice(usbDevice));
+            if (isPrintableUsbDevice(usbDevice)) {
+                lists.add(new USBPrinterDevice(usbDevice));
+            }
         }
         return lists;
+    }
+
+    private boolean isPrintableUsbDevice(UsbDevice usbDevice) {
+        if (usbDevice == null || usbDevice.getVendorId() < 0 || usbDevice.getProductId() < 0) {
+            return false;
+        }
+
+        return findBulkOutInterface(usbDevice) != null;
+    }
+
+    private UsbInterface findBulkOutInterface(UsbDevice usbDevice) {
+        if (usbDevice == null) {
+            return null;
+        }
+
+        for (int interfaceIndex = 0; interfaceIndex < usbDevice.getInterfaceCount(); interfaceIndex++) {
+            UsbInterface usbInterface = usbDevice.getInterface(interfaceIndex);
+            if (findBulkOutEndpoint(usbInterface) != null) {
+                return usbInterface;
+            }
+        }
+
+        return null;
+    }
+
+    private UsbEndpoint findBulkOutEndpoint(UsbInterface usbInterface) {
+        if (usbInterface == null) {
+            return null;
+        }
+
+        for (int endpointIndex = 0; endpointIndex < usbInterface.getEndpointCount(); endpointIndex++) {
+            UsbEndpoint endpoint = usbInterface.getEndpoint(endpointIndex);
+            if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK
+                    && endpoint.getDirection() == UsbConstants.USB_DIR_OUT) {
+                return endpoint;
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -230,6 +271,10 @@ public class USBPrinterAdapter implements PrinterAdapter {
             return;
         }
         for (UsbDevice usbDevice : mUSBManager.getDeviceList().values()) {
+            if (!isPrintableUsbDevice(usbDevice)) {
+                continue;
+            }
+
             if (usbDevice.getVendorId() == usbPrinterDeviceId.getVendorId()
                     && usbDevice.getProductId() == usbPrinterDeviceId.getProductId()) {
                 Log.v(LOG_TAG, "request for device: vendor_id: " + usbPrinterDeviceId.getVendorId() + ", product_id: "
@@ -259,35 +304,34 @@ public class USBPrinterAdapter implements PrinterAdapter {
 
             closeConnectionIfExists();
 
-            UsbInterface usbInterface = mUsbDevice.getInterface(0);
-            for (int i = 0; i < usbInterface.getEndpointCount(); i++) {
-                final UsbEndpoint ep = usbInterface.getEndpoint(i);
-                if (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
-                    if (ep.getDirection() == UsbConstants.USB_DIR_OUT) {
-                        UsbDeviceConnection usbDeviceConnection =
-                                mUSBManager.openDevice(mUsbDevice);
-                        if (usbDeviceConnection == null) {
-                            Log.e(LOG_TAG, "failed to open USB Connection");
-                            return false;
-                        }
+            UsbInterface usbInterface = findBulkOutInterface(mUsbDevice);
+            UsbEndpoint ep = findBulkOutEndpoint(usbInterface);
+            if (usbInterface == null || ep == null) {
+                Log.e(LOG_TAG, "USB device has no bulk OUT endpoint");
+                return false;
+            }
 
-                        if (usbDeviceConnection.claimInterface(
-                                usbInterface,
-                                true
-                        )) {
+            UsbDeviceConnection usbDeviceConnection =
+                    mUSBManager.openDevice(mUsbDevice);
+            if (usbDeviceConnection == null) {
+                Log.e(LOG_TAG, "failed to open USB Connection");
+                return false;
+            }
 
-                            mEndPoint = ep;
-                            mUsbInterface = usbInterface;
-                            mUsbDeviceConnection = usbDeviceConnection;
-                            Log.i(LOG_TAG, "Device connected");
-                            return true;
-                        } else {
-                            usbDeviceConnection.close();
-                            Log.e(LOG_TAG, "failed to claim usb connection");
-                            return false;
-                        }
-                    }
-                }
+            if (usbDeviceConnection.claimInterface(
+                    usbInterface,
+                    true
+            )) {
+
+                mEndPoint = ep;
+                mUsbInterface = usbInterface;
+                mUsbDeviceConnection = usbDeviceConnection;
+                Log.i(LOG_TAG, "Device connected");
+                return true;
+            } else {
+                usbDeviceConnection.close();
+                Log.e(LOG_TAG, "failed to claim usb connection");
+                return false;
             }
         } catch (Exception e) {
             Log.e(LOG_TAG, "openConnection error", e);
